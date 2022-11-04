@@ -1,0 +1,24 @@
+{
+  "ts-node": {
+    "transpileOnly": true,
+  },
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "./lib",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "target": "esnext",
+    "module": "commonjs",
+    "lib": ["esnext"],
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+  },
+  "include": ["src/**/*"],
+  "exclude": ["**/*.test.ts"],
+}
