@@ -1,5 +1,6 @@
 import { constTrue, pipe, TE } from '@matheuspuel/fp-ts-reexports'
 import axios from 'axios'
+import { Predicate } from 'fp-ts/Predicate'
 import { TaskEither } from 'fp-ts/TaskEither'
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH'
@@ -10,7 +11,7 @@ export type FetchInput = {
   method: HttpMethod
   url: string
   headers: HttpHeaders
-  data: string
+  body: string
 }
 
 export type FetchError = {
@@ -22,6 +23,16 @@ export type FetchError = {
 const fetchError =
   (input: FetchInput) =>
   (error: unknown): FetchError => ({ _tag: 'FetchError', input, error })
+
+export type HttpStatusError = {
+  _tag: 'HttpStatusError'
+  response: HttpResponse
+}
+
+const httpStatusError = (response: HttpResponse): HttpStatusError => ({
+  _tag: 'HttpStatusError',
+  response,
+})
 
 export type HttpResponse = {
   status: number
@@ -38,11 +49,22 @@ export const fetch = (
           url: input.url,
           method: input.method,
           headers: input.headers,
-          data: input.data,
+          data: input.body,
           validateStatus: constTrue,
         }),
-      e => e,
+      fetchError(input),
     ),
-    TE.mapLeft(fetchError(input)),
     TE.map(r => ({ status: r.status, body: r.data })),
   )
+
+export const filterStatus =
+  (predicate: Predicate<number>) =>
+  (
+    response: TaskEither<FetchError, HttpResponse>,
+  ): TaskEither<FetchError | HttpStatusError, HttpResponse> =>
+    pipe(
+      response,
+      TE.chainW(v =>
+        predicate(v.status) ? TE.right(v) : TE.left(httpStatusError(v)),
+      ),
+    )
